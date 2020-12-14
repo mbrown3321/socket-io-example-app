@@ -1,23 +1,70 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import "./App.css";
+import io from "socket.io-client";
+
+const socket = io();
+
+// socket.on("connect", function() {
+//   console.log("connected");
+// });
+
+// socket.on("disconnect", function() {
+//   console.log("disconnected");
+// });
 
 function App() {
+  const [message, setMessage] = useState("");
+  const [receivedMessages, setReceivedMessages] = useState([]);
+  const [displayName, setDisplayName] = useState(null);
+  const [displayNameInput, setDisplayNameInput] = useState("");
+
+  useEffect(() => {
+    socket.on("message", message => {
+      setReceivedMessages(prevState => [...prevState, message]);
+    });
+  }, []);
+
+  const sendMessage = () => {
+    socket.emit("message", `${displayName}: ${message}`);
+    setMessage("");
+  };
+
+  const onUpdateMessage = event => {
+    setMessage(event.target.value);
+  };
+
+  const onUpdateDisplayNameInput = event => {
+    setDisplayNameInput(event.target.value);
+  };
+
+  const updateDisplayName = () => {
+    setDisplayName(displayNameInput);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="container">
+      {displayName ? (
+        <>
+          <ul>
+            {receivedMessages.map((item, index) => (
+              <li key={index}>{item}</li>
+            ))}
+          </ul>
+          <input type="text" value={message} onChange={onUpdateMessage} />
+          <button onClick={sendMessage}>SEND</button>
+        </>
+      ) : (
+        <>
+          <label for="display-name">Display Name</label>
+          <br />
+          <input
+            type="text"
+            value={displayNameInput}
+            onChange={onUpdateDisplayNameInput}
+          />
+          <button onClick={updateDisplayName}>SUBMIT</button>
+        </>
+      )}
     </div>
   );
 }
